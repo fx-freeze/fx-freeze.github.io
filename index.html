@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#062827">
+    <meta name="description" content="Fx_Freeze">
+    <title>Fx_Freeze</title>
+    <link rel="icon" type="image/jpeg" href="https://raw.githubusercontent.com/fx-freeze/fx-freeze.github.io/main/images1.jfif">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/fx-freeze/fx-freeze.github.io/main/images1.jfif">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root{
+            --neon:#35d6c7;
+            --neon-dark:#0e7778;
+            --neon-glow:rgba(34,211,197,0.4);
+            --bg:#050d1b;
+            --panel-bg:rgba(3,24,29,.88);
+            --card-bg:rgba(4,28,32,.87);
+            --border:rgba(37,190,180,.25);
+        }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+        body{
+            background:var(--bg);color:#fff;
+            display:flex;flex-direction:column;align-items:center;
+            min-height:100vh;padding:48px 15px 60px;overflow-x:hidden;
+            background-image:radial-gradient(ellipse at 50% 0%,rgba(0,113,113,.32),transparent 55%),linear-gradient(180deg,#062827 0%,#020d0d 100%);
+        }
+
+        /* Özel siberpunk imleç: takipçi halka ve gecikmeli neon izi */
+        @media (hover:hover) and (pointer:fine){
+            html.fx-cursor-enabled,html.fx-cursor-enabled body,html.fx-cursor-enabled body *{cursor:none!important;}
+            .fx-cursor,.fx-cursor-trail{position:fixed;left:0;top:0;z-index:2000;pointer-events:none;border-radius:50%;opacity:0;transform:translate3d(-100px,-100px,0);will-change:transform,opacity;}
+            .fx-cursor{width:28px;height:28px;margin:-14px 0 0 -14px;border:1px solid rgba(72,226,211,.9);box-shadow:0 0 12px rgba(34,211,197,.32),inset 0 0 8px rgba(34,211,197,.14);transition:width .18s ease,height .18s ease,margin .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease;}
+            .fx-cursor:before,.fx-cursor:after{content:"";position:absolute;left:50%;top:50%;background:#6be4d6;box-shadow:0 0 7px rgba(72,226,211,.9);transform:translate(-50%,-50%);}
+            .fx-cursor:before{width:2px;height:7px}.fx-cursor:after{width:7px;height:2px}
+            .fx-cursor-trail{width:4px;height:4px;margin:-2px 0 0 -2px;background:#6be4d6;box-shadow:0 0 9px 2px rgba(34,211,197,.65);transition:opacity .18s ease;}
+            .fx-cursor.is-visible,.fx-cursor-trail.is-visible{opacity:1}
+            .fx-cursor.is-hover{width:42px;height:42px;margin:-21px 0 0 -21px;border-color:#8ff2e5;background:rgba(34,211,197,.12);box-shadow:0 0 22px rgba(34,211,197,.42),inset 0 0 12px rgba(34,211,197,.16)}
+            .fx-cursor.is-pressed{width:22px;height:22px;margin:-11px 0 0 -11px;background:rgba(34,211,197,.28)}
+            .fx-cursor.is-text{width:3px;height:25px;margin:-12px 0 0 -1px;border:0;border-radius:2px;background:#8ff2e5;box-shadow:0 0 10px rgba(34,211,197,.65)}
+            .fx-cursor.is-text:before,.fx-cursor.is-text:after{display:none}
+            @media(prefers-reduced-motion:reduce){.fx-cursor,.fx-cursor-trail{transition:none!important}}
+        }
+
+        /* ARKAPLAN EFEKTLERİ */
+        #matrix-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;opacity:.15;}
+        .bg-video-container{position:fixed;inset:0;z-index:-2;overflow:hidden;background:#031818;pointer-events:none;}
+        .bg-video{position:absolute;width:100%;height:100%;object-fit:cover;opacity:.52;filter:brightness(.48) contrast(1.12);}
+        .bg-video-container:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(3,18,20,.78),rgba(3,18,20,.35) 50%,rgba(3,18,20,.78)),linear-gradient(0deg,rgba(3,18,20,.75),transparent 55%,rgba(3,18,20,.45));}
+        .bg-overlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(2,16,18,.82);z-index:-1;}
+        .scanlines{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:998;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.08) 2px,rgba(0,0,0,.08) 4px);}
+
+        /* PANELLER */
+        .profile-container{
+            width:100%;max-width:680px;text-align:center;backdrop-filter:blur(10px);
+            padding:30px 28px;border-radius:24px;background:var(--panel-bg);
+            border:1px solid var(--border);box-shadow:0 18px 60px rgba(0,0,0,.3),0 0 35px rgba(6,64,65,.18);
+            position:relative;z-index:10;margin-top:25px;
+        }
+        .profile-container{overflow:hidden;}
+        .profile-container:before{content:"";position:absolute;top:0;left:12%;right:12%;height:1px;background:linear-gradient(90deg,transparent,var(--neon),transparent);opacity:.65;}
+
+        /* AVATAR */
+        .avatar-wrapper{position:relative;width:105px;height:105px;margin:0 auto 12px;}
+        .avatar-container{
+            width:92px;height:92px;margin:0 auto;border-radius:50%;overflow:hidden;
+            border:2px solid rgba(22,126,128,.7);box-shadow:0 0 20px rgba(22,126,128,.4);animation:avatar-heartbeat 1.8s ease-in-out infinite;transform-origin:center;
+            background:#111;
+        }
+        @keyframes avatar-heartbeat{0%,44%,100%{transform:scale(1);box-shadow:0 0 18px rgba(22,126,128,.36)}8%{transform:scale(1.055);box-shadow:0 0 27px rgba(34,211,197,.62)}16%{transform:scale(1);box-shadow:0 0 18px rgba(22,126,128,.4)}24%{transform:scale(1.035);box-shadow:0 0 23px rgba(34,211,197,.52)}34%{transform:scale(1)}}
+        .avatar-ring{position:absolute;inset:-7px;border-radius:50%;border:2px solid transparent;border-top-color:var(--neon);animation:ring 2.5s linear infinite;}
+        .avatar-ring2{position:absolute;inset:-13px;border-radius:50%;border:1px solid transparent;border-bottom-color:rgba(255,0,50,.3);animation:ring 4s linear infinite reverse;}
+        @keyframes ring{to{transform:rotate(360deg)}}
+        .avatar-img{width:100%;height:100%;object-fit:cover;display:block;}
+
+        /* NICK VE YAZILAR */
+        .neon-nick{
+            font-family:'Orbitron',sans-serif;font-size:34px;font-weight:900;letter-spacing:5px;
+            color:var(--neon);text-shadow:0 0 10px var(--neon),0 0 30px var(--neon-dark);
+        }
+        .neon-nick.is-glitching{position:relative;animation:nick-glitch .13s steps(2,end) infinite;}
+        .neon-nick.is-glitching:before,.neon-nick.is-glitching:after{content:attr(data-glitch);position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+        .neon-nick.is-glitching:before{color:#fff;text-shadow:-2px 0 #00eaff;clip-path:inset(8% 0 58%);transform:translateX(2px);}
+        .neon-nick.is-glitching:after{color:#6be4d6;text-shadow:2px 0 #8c00ff;clip-path:inset(58% 0 8%);transform:translateX(-2px);}
+        @keyframes nick-glitch{0%{transform:translate(0)}25%{transform:translate(1px,-1px)}50%{transform:translate(-1px,1px)}75%{transform:translate(1px,1px)}100%{transform:translate(0)}}
+        .subtitle{
+            color:rgba(255,255,255,.6);font-family:'Share Tech Mono',monospace;font-size:13px;
+            letter-spacing:2px;margin-top:4px;
+        }
+        .hero-meta{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:8px;margin-top:15px;}
+        .meta-pill{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border:1px solid rgba(34,211,197,.22);border-radius:99px;background:rgba(34,211,197,.07);font:11px 'Share Tech Mono',monospace;color:rgba(255,255,255,.72);}
+        .meta-pill i{color:var(--neon);}
+
+        .section-title{
+            font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:2px;
+            color:var(--neon);margin:24px 0 12px;text-align:left;padding-left:4px;
+            display:flex;align-items:center;gap:8px;
+        }
+        .section-title:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,rgba(34,211,197,.3),transparent);}
+
+        .hero-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:9px;margin-top:13px;}
+        .hero-action{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:8px 13px;border-radius:10px;background:rgba(34,211,197,.1);border:1px solid rgba(34,211,197,.27);color:#fff;text-decoration:none;font:11px 'Poppins',sans-serif;cursor:pointer;transition:all .2s;}
+        .hero-action i{color:var(--neon);}
+        .hero-action:hover,.hero-action[aria-pressed="true"]{background:rgba(34,211,197,.24);border-color:var(--neon);box-shadow:0 0 14px rgba(34,211,197,.14);}
+        .hero-action:focus-visible{outline:2px solid #8ff2e5;outline-offset:3px;}
+        #local-time{font-variant-numeric:tabular-nums;}
+        .music-player{width:100%;max-width:420px;margin:12px auto 0;max-height:0;opacity:0;overflow:hidden;transform:translateY(-6px);transition:max-height .35s ease,opacity .25s ease,transform .25s ease;}
+        .music-player.active{max-height:126px;opacity:1;transform:translateY(0);}
+        .music-card{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid rgba(34,211,197,.3);border-radius:14px;background:linear-gradient(120deg,rgba(7,51,55,.94),rgba(12,2,5,.96));box-shadow:0 8px 26px rgba(0,0,0,.28),inset 0 0 18px rgba(34,211,197,.045);text-align:left;}
+        .music-cover-wrap{position:relative;width:56px;height:56px;flex:0 0 56px;display:grid;place-items:center;}
+        .music-cover-wrap:before{content:"";position:absolute;inset:-3px;border:1px solid rgba(34,211,197,.24);border-radius:50%;pointer-events:none;}
+        .music-cover{position:relative;z-index:1;display:block;width:100%;height:100%;object-fit:cover;border-radius:50%;border:2px solid rgba(255,255,255,.16);}
+        .music-cover-wrap:after{content:"";position:absolute;inset:0;z-index:2;border:1px solid rgba(255,255,255,.12);border-radius:50%;pointer-events:none;}
+        .music-info{min-width:0;flex:1;}
+        .music-kicker{margin-bottom:3px;color:rgba(255,130,153,.78);font:9px 'Share Tech Mono',monospace;letter-spacing:1.4px;text-transform:uppercase;}
+        .music-title{overflow:hidden;color:#fff;font:600 13px 'Poppins',sans-serif;text-overflow:ellipsis;white-space:nowrap;}
+        .music-artist{margin-top:2px;color:rgba(255,255,255,.56);font:10px 'Poppins',sans-serif;}
+        .music-playing{display:flex;align-items:center;gap:3px;height:22px;padding:0 5px;color:#6be4d6;}
+        .music-playing span{width:3px;height:7px;border-radius:3px;background:currentColor;animation:music-equalize .8s ease-in-out infinite alternate;}
+        .music-playing span:nth-child(2){height:14px;animation-delay:.2s}.music-playing span:nth-child(3){height:10px;animation-delay:.4s}.music-playing span:nth-child(4){height:16px;animation-delay:.1s}
+        @keyframes music-equalize{to{transform:scaleY(.45);opacity:.55}}
+        .music-card.is-paused .music-playing span{animation-play-state:paused;opacity:.45;}
+        .music-card.is-playing .music-cover{animation:record-spin 18s linear infinite;}
+        @keyframes record-spin{to{transform:rotate(360deg)}}
+        .music-toggle{display:grid;place-items:center;width:36px;height:36px;flex:0 0 36px;border:1px solid rgba(34,211,197,.48);border-radius:50%;background:rgba(34,211,197,.14);color:#fff;font-size:13px;cursor:pointer;transition:background .2s,transform .2s,box-shadow .2s;}
+        .music-toggle:hover{transform:scale(1.06);background:rgba(34,211,197,.3);box-shadow:0 0 14px rgba(34,211,197,.22);}
+        .music-toggle:focus-visible{outline:2px solid #8ff2e5;outline-offset:3px;}
+        .music-timeline{display:grid;grid-template-columns:32px minmax(40px,1fr) 32px;align-items:center;gap:8px;margin:8px 3px 0;color:rgba(255,255,255,.55);font:9px 'Share Tech Mono',monospace;font-variant-numeric:tabular-nums;}
+        .music-progress{width:100%;height:3px;margin:0;appearance:none;border:0;border-radius:99px;background:linear-gradient(to right,#6be4d6 0%,#6be4d6 var(--progress,0%),rgba(255,255,255,.2) var(--progress,0%),rgba(255,255,255,.2) 100%);cursor:pointer;}
+        .music-progress::-webkit-slider-thumb{width:9px;height:9px;appearance:none;border:2px solid #fff;border-radius:50%;background:#6be4d6;box-shadow:0 0 8px rgba(72,226,211,.65);}
+        .music-progress::-moz-range-thumb{width:7px;height:7px;border:2px solid #fff;border-radius:50%;background:#6be4d6;box-shadow:0 0 8px rgba(72,226,211,.65);}
+        .music-progress:focus-visible{outline:2px solid #8ff2e5;outline-offset:4px;}
+        .music-timeline-time:last-child{text-align:right;}
+        .music-player audio{display:none;}
+        @media(prefers-reduced-motion:reduce){.music-playing span,.music-cover{animation:none;}}
+
+        /* GRID & CARDS */
+        .links-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+        .card{
+            display:flex;align-items:center;padding:12px 18px;border-radius:14px;
+            text-decoration:none;color:#fff;background:var(--card-bg);
+            border:1px solid rgba(22,126,128,.18);transition:all .25s ease; cursor:pointer;
+            position:relative;isolation:isolate;overflow:hidden;
+        }
+        .card:before{content:"";position:absolute;inset:0;z-index:-1;opacity:0;transition:opacity .25s ease;}
+        .card .icon-box{transition:transform .25s ease,background .25s ease,color .25s ease,box-shadow .25s ease;}
+        .card:hover{
+            transform:translateY(-2px);border-color:var(--neon);
+            box-shadow:0 4px 18px rgba(34,211,197,.25);background:rgba(5,39,43,.95);
+        }
+        .card:hover:before{opacity:1;}
+        .card:hover .icon-box{transform:scale(1.08) rotate(-4deg);}
+        .card[data-platform="instagram"]:before{background:linear-gradient(110deg,rgba(253,29,29,.18),rgba(214,41,118,.13) 48%,rgba(245,133,41,.2));}
+        .card[data-platform="instagram"]:hover{border-color:#f04462;box-shadow:0 7px 24px rgba(225,48,108,.2);}
+        .card[data-platform="instagram"]:hover .icon-box{color:#fff;background:linear-gradient(135deg,#feda75,#fa7e1e 38%,#d62976 72%,#962fbf);box-shadow:0 0 18px rgba(214,41,118,.32);}
+        .card[data-platform="whatsapp"]:before{background:linear-gradient(110deg,rgba(37,211,102,.14),transparent 65%);}
+        .card[data-platform="whatsapp"]:hover{border-color:#25d366;box-shadow:0 7px 24px rgba(37,211,102,.16);}
+        .card[data-platform="whatsapp"]:hover .icon-box{color:#062b14;background:#25d366;box-shadow:0 0 16px rgba(37,211,102,.32);}
+        .card[data-platform="discord"]:before{background:linear-gradient(110deg,rgba(88,101,242,.18),transparent 68%);}
+        .card[data-platform="discord"]:hover{border-color:#7289ff;box-shadow:0 7px 24px rgba(88,101,242,.17);}
+        .card[data-platform="discord"]:hover .icon-box{color:#fff;background:#5865f2;box-shadow:0 0 16px rgba(88,101,242,.35);}
+        .card[data-platform="tiktok"]:before{background:linear-gradient(110deg,rgba(37,244,238,.12),rgba(254,44,85,.13));}
+        .card[data-platform="tiktok"]:hover{border-color:#25f4ee;box-shadow:0 7px 24px rgba(37,244,238,.13),0 0 16px rgba(254,44,85,.1);}
+        .card[data-platform="tiktok"]:hover .icon-box{color:#fff;background:linear-gradient(135deg,#25f4ee,#171717 52%,#fe2c55);box-shadow:0 0 16px rgba(37,244,238,.25);}
+        .card[data-platform="steam"]:before{background:linear-gradient(110deg,rgba(102,192,244,.14),transparent 68%);}
+        .card[data-platform="steam"]:hover{border-color:#66c0f4;box-shadow:0 7px 24px rgba(102,192,244,.15);}
+        .card[data-platform="steam"]:hover .icon-box{color:#fff;background:linear-gradient(135deg,#1b2838,#66c0f4);box-shadow:0 0 16px rgba(102,192,244,.25);}
+        .card[data-platform="email"]:before{background:linear-gradient(110deg,rgba(255,107,107,.12),transparent 68%);}
+        .card[data-platform="email"]:hover{border-color:#8ff2e5;box-shadow:0 7px 24px rgba(255,107,107,.14);}
+        .card[data-platform="email"]:hover .icon-box{color:#fff;background:#b51f3e;box-shadow:0 0 16px rgba(72,226,211,.28);}
+        .card[hidden]{display:none!important;}
+        .card[aria-disabled="true"]{cursor:default;}
+        .card[aria-disabled="true"]:hover{transform:none;border-color:rgba(22,126,128,.18);box-shadow:none;background:var(--card-bg);}
+
+        .icon-box{
+            font-size:20px;width:42px;height:42px;min-width:42px;display:flex;
+            justify-content:center;align-items:center;border-radius:10px;
+            margin-right:12px;background:rgba(22,126,128,.1);color:var(--neon);
+        }
+        .content{text-align:left;flex-grow:1;min-width:0;}
+        .content h3{font-size:14px;font-weight:600;}
+        .content p{font-size:12px;opacity:.65;}
+        .copy-badge{
+            background:rgba(22,126,128,.15);padding:4px 10px;border-radius:12px;
+            font-size:11px;font-weight:600;color:var(--neon);user-select:none;
+        }
+        .mernis-notice{
+            margin-top:20px;padding:12px 16px;font-size:12px;font-weight:600;
+            color:#ff2a55;background:rgba(255,0,0,.08);border:1px dashed rgba(255,0,0,.35);
+            border-radius:12px;
+        }
+        .announcement-overlay{position:fixed;inset:0;z-index:1500;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.76);backdrop-filter:blur(5px);opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease;}
+        .announcement-overlay.is-visible{opacity:1;visibility:visible;}
+        .announcement-dialog{position:relative;width:min(100%,430px);padding:30px 26px 25px;text-align:center;border:1px solid rgba(34,211,197,.48);border-radius:20px;background:linear-gradient(145deg,rgba(31,4,10,.98),rgba(10,1,3,.98));box-shadow:0 0 55px rgba(34,211,197,.2),0 20px 70px rgba(0,0,0,.55);transform:translateY(10px) scale(.98);transition:transform .25s ease;}
+        .announcement-overlay.is-visible .announcement-dialog{transform:translateY(0) scale(1);}
+        .announcement-icon{width:52px;height:52px;display:grid;place-items:center;margin:0 auto 16px;border:1px solid rgba(34,211,197,.4);border-radius:16px;background:rgba(34,211,197,.12);color:#6be4d6;font-size:22px;box-shadow:0 0 24px rgba(34,211,197,.15);}
+        .announcement-dialog h2{margin-bottom:10px;color:#6be4d6;font:700 16px 'Orbitron',sans-serif;letter-spacing:1px;}
+        .announcement-dialog p{color:rgba(255,255,255,.9);font-size:15px;line-height:1.65;}
+        .announcement-close{margin-top:22px;padding:9px 22px;border:1px solid rgba(34,211,197,.5);border-radius:9px;background:rgba(34,211,197,.15);color:#fff;font:600 12px 'Poppins',sans-serif;cursor:pointer;transition:background .2s,box-shadow .2s;}
+        .announcement-close:hover{background:rgba(34,211,197,.3);box-shadow:0 0 16px rgba(34,211,197,.2);}
+        .announcement-close:focus-visible{outline:2px solid #8ff2e5;outline-offset:3px;}
+        .back-to-top{position:fixed;right:20px;bottom:20px;z-index:1000;width:42px;height:42px;border-radius:50%;border:1px solid rgba(34,211,197,.45);background:rgba(3,24,29,.9);color:var(--neon);cursor:pointer;box-shadow:0 0 18px rgba(34,211,197,.18);opacity:0;visibility:hidden;transform:translateY(8px);transition:all .2s;}
+        .back-to-top.visible{opacity:1;visibility:visible;transform:translateY(0);}
+        .back-to-top:hover{background:var(--neon);color:#fff;}
+        .site-footer{width:100%;max-width:680px;margin:18px auto 0;padding:12px 16px;color:rgba(255,255,255,.42);text-align:center;font:10px 'Share Tech Mono',monospace;letter-spacing:.6px;}
+        .site-footer span{color:rgba(34,211,197,.8);}
+        .card:focus-visible,.back-to-top:focus-visible{outline:2px solid #8ff2e5;outline-offset:3px;}
+
+        /* AÇILIŞ EKRANI */
+        .bg-terminal{position:fixed;top:0;left:0;width:100vw;z-index:990;pointer-events:none;}
+        .bg-terminal-header{
+            display:flex;align-items:center;padding:8px 20px;background:rgba(4,30,34,.92);
+            border-bottom:1px solid rgba(34,211,197,.25);backdrop-filter:blur(6px);gap:8px;
+        }
+        .terminal-dot{width:10px;height:10px;border-radius:50%;}
+        .terminal-dot.r{background:#ff5f56;}
+        .terminal-dot.y{background:#ffbd2e;}
+        .terminal-dot.g{background:#27c93f;}
+        .terminal-title{font-family:'Share Tech Mono',monospace;font-size:12px;color:rgba(255,200,200,.75);margin-left:8px;}
+
+        @media(max-width:600px){
+            .links-grid{grid-template-columns:1fr;}
+            .profile-container{padding:22px 16px;}
+            .neon-nick{font-size:26px;}
+            .profile-container{padding:25px 16px;}
+            .back-to-top{right:14px;bottom:14px;}
+        }
+        @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important;}.avatar-container{animation:none!important;}}
+
+        /* KIRMIZI KALACAK BİLGİLENDİRMELER */
+        .announcement-dialog{border-color:rgba(255,7,58,.48);background:linear-gradient(145deg,rgba(31,4,10,.98),rgba(10,1,3,.98));box-shadow:0 0 55px rgba(255,7,58,.2),0 20px 70px rgba(0,0,0,.55);}
+        .announcement-icon{border-color:rgba(255,7,58,.4);background:rgba(255,7,58,.12);color:#ff315c;box-shadow:0 0 24px rgba(255,7,58,.15);}
+        .announcement-dialog h2{color:#ff315c;}
+        .announcement-close{border-color:rgba(255,7,58,.5);background:rgba(255,7,58,.15);}
+        .announcement-close:hover{background:rgba(255,7,58,.3);box-shadow:0 0 16px rgba(255,7,58,.2);}
+        .announcement-close:focus-visible{outline-color:#ff5574;}
+    </style>
+</head>
+<body>
+    <div class="fx-cursor-trail" aria-hidden="true"></div>
+    <div class="fx-cursor" aria-hidden="true"></div>
+
+    <div class="announcement-overlay" id="announcement-overlay" aria-hidden="true">
+        <section class="announcement-dialog" role="dialog" aria-modal="true" aria-labelledby="announcement-title">
+            <div class="announcement-icon" aria-hidden="true"><i class="fas fa-bullhorn"></i></div>
+            <h2 id="announcement-title">BİLGİLENDİRME</h2>
+            <p>Eski sevgililerinizin sosyal medya hesabını çalmıyorum!</p>
+            <button class="announcement-close" id="announcement-close" type="button">Anladım</button>
+        </section>
+    </div>
+
+    <canvas id="matrix-canvas"></canvas>
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <div class="bg-video-container" aria-hidden="true">
+        <img class="bg-video" src="profil.png" alt="" fetchpriority="high">
+    </div>
+    <div class="bg-overlay"></div>
+
+    <!-- ÜST TERMİNAL BARI -->
+    <div class="bg-terminal">
+        <div class="bg-terminal-header">
+            <div class="terminal-dot r"></div>
+            <div class="terminal-dot y"></div>
+            <div class="terminal-dot g"></div>
+            <span class="terminal-title"><i class="fas fa-terminal"></i> root@fx-freeze:~#</span>
+        </div>
+    </div>
+
+    <!-- 1. BÖLÜM: PROFİL KARTI -->
+    <div class="profile-container">
+        <div class="avatar-wrapper">
+            <div class="avatar-ring2"></div>
+            <div class="avatar-ring"></div>
+            <div class="avatar-container">
+                <img src="profil.png" alt="Fx_Freeze" class="avatar-img">
+            </div>
+        </div>
+        <h1 class="neon-nick" id="profile-nick">Fx_Freeze</h1>
+        <div class="hero-meta" aria-label="Profil bilgileri">
+            <span class="meta-pill"><i class="fas fa-location-dot" aria-hidden="true"></i> Türkiye <span aria-hidden="true">·</span> <b id="local-time">--:--</b></span>
+        </div>
+        <div class="hero-actions">
+            <button class="hero-action" id="share-profile" type="button"><i class="fas fa-share-nodes" aria-hidden="true"></i> Profili Paylaş</button>
+        </div>
+        <div class="music-player active" id="music-player" aria-label="Arka plan müziği">
+            <div class="music-card" aria-label="Şu anda çalan parça: Lacivert, Motive">
+                <div class="music-cover-wrap"><img class="music-cover" src="https://raw.githubusercontent.com/fx-freeze/fx-freeze.github.io/main/images1.jfif" alt="Motive - Lacivert parça kapağı" width="56" height="56"></div>
+                <div class="music-info"><div class="music-kicker"><i class="fas fa-wave-square" aria-hidden="true"></i> ŞİMDİ ÇALIYOR</div><div class="music-title">Lacivert</div><div class="music-artist">Motive</div></div>
+                <div class="music-playing" aria-hidden="true" title="Müzik çalıyor"><span></span><span></span><span></span><span></span></div>
+                <button class="music-toggle" id="music-toggle" type="button" aria-label="Müziği duraklat" aria-pressed="false" title="Duraklat"><i class="fas fa-pause" aria-hidden="true"></i></button>
+            </div>
+            <div class="music-timeline">
+                <span class="music-timeline-time" id="music-current-time">0:00</span>
+                <input class="music-progress" id="music-progress" type="range" min="0" max="1000" value="0" step="1" aria-label="Şarkıda konum" aria-valuetext="0:00 / 0:00">
+                <span class="music-timeline-time" id="music-duration">0:00</span>
+            </div>
+            <audio id="background-music" preload="auto" loop>
+                <source src="https://raw.githubusercontent.com/fx-freeze/fx-freeze.github.io/main/LACIVERT.mp3" type="audio/mpeg">
+            </audio>
+        </div>
+
+        <!-- SOSYAL MEDYA LİNKLERİ -->
+        <div class="section-title"><i class="fas fa-share-nodes"></i> Sosyal Medya & İletişim</div>
+        <div class="links-grid" id="social-links">
+            <a href="https://wa.me/905339689526" target="_blank" class="card" data-platform="whatsapp">
+                <div class="icon-box"><i class="fab fa-whatsapp"></i></div>
+                <div class="content"><h3>WhatsApp</h3><p>+90 533 968 95 26</p></div>
+                <span class="copy-badge">Mesaj</span>
+            </a>
+
+            <a href="https://www.instagram.com/fx_Freeze/" target="_blank" class="card" data-platform="instagram">
+                <div class="icon-box"><i class="fab fa-instagram"></i></div>
+                <div class="content"><h3>Instagram</h3><p>@Fx_Freeze</p></div>
+            </a>
+
+            <div class="card" data-platform="discord" data-action="copy-discord" role="button" tabindex="0">
+                <div class="icon-box"><i class="fab fa-discord"></i></div>
+                <div class="content"><h3>Discord</h3><p id="discord-tag">FxFr</p></div>
+                <span class="copy-badge" id="copy-text">Kopyala</span>
+            </div>
+
+            <a href="https://www.tiktok.com/@fx_freeze" target="_blank" class="card" data-platform="tiktok">
+                <div class="icon-box"><i class="fab fa-tiktok"></i></div>
+                <div class="content"><h3>TikTok</h3><p>@Fx_Freeze</p></div>
+            </a>
+
+            <a href="mailto:fxfreezex@gmail.com" class="card" data-platform="email">
+                <div class="icon-box"><i class="fas fa-envelope"></i></div>
+                <div class="content"><h3>E-Posta</h3><p>fxfreezex@gmail.com</p></div>
+                <span class="copy-badge">Mail</span>
+            </a>
+
+            <a href="https://steamcommunity.com/profiles/76561199144539932/" target="_blank" class="card" data-platform="steam">
+                <div class="icon-box"><i class="fab fa-steam"></i></div>
+                <div class="content"><h3>Steam</h3><p>Profiller / Oyunlar</p></div>
+            </a>
+        </div>
+    </div>
+
+    <footer class="site-footer">© <span id="current-year"></span> Fx_Freeze</footer>
+    <button class="back-to-top" id="back-to-top" type="button" aria-label="Sayfanın başına dön" title="Yukarı çık"><i class="fas fa-arrow-up" aria-hidden="true"></i></button>
+
+    <script>
+    /* 1. PROFİL ARAYÜZÜ: ARAMA, SAYAC VE SAYFA KONTROLLERİ */
+    (function(){
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+        document.querySelectorAll('[data-action]').forEach(element=>{
+            const activate=()=>{
+                if(element.dataset.action==='copy-discord')copyDiscord();
+            };
+            element.addEventListener('click',activate);
+            element.addEventListener('keydown',event=>{
+                if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}
+            });
+        });
+        const announcement=document.getElementById('announcement-overlay');
+        const announcementClose=document.getElementById('announcement-close');
+        const backgroundMusic=document.getElementById('background-music');
+        const musicToggle=document.getElementById('music-toggle');
+        const musicCard=document.querySelector('.music-card');
+        const musicProgress=document.getElementById('music-progress');
+        const musicCurrentTime=document.getElementById('music-current-time');
+        const musicDuration=document.getElementById('music-duration');
+        const formatMusicTime=seconds=>{
+            if(!Number.isFinite(seconds)||seconds<0)return '0:00';
+            const minutes=Math.floor(seconds/60);
+            const remainder=Math.floor(seconds%60).toString().padStart(2,'0');
+            return `${minutes}:${remainder}`;
+        };
+        function updateMusicTimeline(){
+            const duration=backgroundMusic.duration;
+            const current=backgroundMusic.currentTime||0;
+            if(!Number.isFinite(duration)||duration<=0){
+                musicCurrentTime.textContent=formatMusicTime(current);
+                musicDuration.textContent='0:00';
+                musicProgress.value='0';
+                musicProgress.style.setProperty('--progress','0%');
+                musicProgress.setAttribute('aria-valuetext',`${formatMusicTime(current)} / süre yükleniyor`);
+                return;
+            }
+            const progress=Math.min(1000,Math.round(current/duration*1000));
+            musicCurrentTime.textContent=formatMusicTime(current);
+            musicDuration.textContent=formatMusicTime(duration);
+            musicProgress.value=String(progress);
+            musicProgress.style.setProperty('--progress',`${progress/10}%`);
+            musicProgress.setAttribute('aria-valuetext',`${formatMusicTime(current)} / ${formatMusicTime(duration)}`);
+        }
+        function updateMusicToggle(isPlaying){
+            musicToggle.setAttribute('aria-label',isPlaying?'Müziği duraklat':'Müziği devam ettir');
+            musicToggle.setAttribute('title',isPlaying?'Duraklat':'Devam ettir');
+            musicToggle.setAttribute('aria-pressed',String(!isPlaying));
+            musicToggle.innerHTML=`<i class="fas fa-${isPlaying?'pause':'play'}" aria-hidden="true"></i>`;
+            musicCard.classList.toggle('is-paused',!isPlaying);
+            musicCard.classList.toggle('is-playing',isPlaying);
+        }
+        function closeAnnouncement(){
+            if(announcement.contains(document.activeElement))document.getElementById('share-profile').focus({preventScroll:true});
+            announcement.classList.remove('is-visible');
+            announcement.setAttribute('aria-hidden','true');
+            backgroundMusic.play().then(()=>updateMusicToggle(true)).catch(()=>{});
+        }
+        requestAnimationFrame(()=>{
+            announcement.classList.add('is-visible');
+            announcement.setAttribute('aria-hidden','false');
+            announcementClose.focus();
+        });
+        announcementClose.addEventListener('click',closeAnnouncement);
+        musicToggle.addEventListener('click',()=>{
+            if(backgroundMusic.paused){
+                backgroundMusic.play().then(()=>updateMusicToggle(true)).catch(error=>console.warn('Müzik devam ettirilemedi.',error));
+            }else{
+                backgroundMusic.pause();
+                updateMusicToggle(false);
+            }
+        });
+        backgroundMusic.addEventListener('play',()=>updateMusicToggle(true));
+        backgroundMusic.addEventListener('pause',()=>updateMusicToggle(false));
+        backgroundMusic.addEventListener('loadedmetadata',updateMusicTimeline);
+        backgroundMusic.addEventListener('durationchange',updateMusicTimeline);
+        backgroundMusic.addEventListener('timeupdate',updateMusicTimeline);
+        backgroundMusic.addEventListener('seeked',updateMusicTimeline);
+        musicProgress.addEventListener('input',()=>{
+            const duration=backgroundMusic.duration;
+            if(Number.isFinite(duration)&&duration>0){
+                backgroundMusic.currentTime=Number(musicProgress.value)/1000*duration;
+                updateMusicTimeline();
+            }
+        });
+        updateMusicToggle(!backgroundMusic.paused);
+        announcement.addEventListener('click',event=>{
+            if(event.target===announcement)closeAnnouncement();
+        });
+        document.addEventListener('keydown',event=>{
+            if(event.key==='Escape'&&announcement.classList.contains('is-visible'))closeAnnouncement();
+        });
+        const clock = document.getElementById('local-time');
+        const updateClock = () => clock.textContent = new Intl.DateTimeFormat('tr-TR',{timeZone:'Europe/Istanbul',hour:'2-digit',minute:'2-digit'}).format(new Date());
+        updateClock();
+        setInterval(updateClock,30000);
+
+        document.getElementById('share-profile').addEventListener('click', async function(){
+            const original = this.innerHTML;
+            try{
+                if(navigator.share){
+                    await navigator.share({title:document.title,url:location.href});
+                }else if(navigator.clipboard && window.isSecureContext){
+                    await navigator.clipboard.writeText(location.href);
+                    this.innerHTML = '<i class="fas fa-check" aria-hidden="true"></i> Link Kopyalandı';
+                    setTimeout(() => this.innerHTML = original,1800);
+                }else{
+                    window.prompt('Profil bağlantısını kopyala:',location.href);
+                }
+            }catch(error){if(error.name !== 'AbortError') console.warn('Paylaşım kullanılamadı.',error);}
+        });
+        const topButton = document.getElementById('back-to-top');
+        window.addEventListener('scroll', () => topButton.classList.toggle('visible', window.scrollY > 360), {passive:true});
+        topButton.addEventListener('click', () => window.scrollTo({top:0,behavior:'smooth'}));
+    })();
+
+    /* 2. YEREL SES OYNATICISI */
+    const musicPlayer = document.getElementById('music-player');
+
+    /* SEÇİLEN METNE KOPYALAMA DAMGASI EKLE */
+    document.addEventListener('copy',(event)=>{
+        const selection=window.getSelection();
+        const copiedText=selection?selection.toString():'';
+        if(!copiedText.trim()||!event.clipboardData)return;
+        const stamp='\n\n---\n[!] Bu veri Fx_Freeze sistemlerinden kopyalanmıştır.\n[!] Skidlik yapma, kendin kodla: https://instagram.com/Fx_Freeze';
+        event.clipboardData.setData('text/plain',copiedText+stamp);
+        event.preventDefault();
+    });
+
+    /* PROFİL ADINDA ARALIKLI GLITCH */
+    (function(){
+        const nick=document.getElementById('profile-nick');
+        if(!nick||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+        const original='Fx_Freeze',glitches=['pwn3d','1337'];
+        function glitch(){
+            const text=glitches[Math.floor(Math.random()*glitches.length)];
+            nick.textContent=text;nick.dataset.glitch=text;nick.classList.add('is-glitching');
+            window.setTimeout(()=>{
+                nick.classList.remove('is-glitching');nick.textContent=original;nick.removeAttribute('data-glitch');
+                window.setTimeout(glitch,7000+Math.random()*9000);
+            },450+Math.random()*250);
+        }
+        window.setTimeout(glitch,5000+Math.random()*5000);
+    })();
+
+    /* 3. DİSCORD KOPYALAYICI */
+    function copyDiscord(){
+        navigator.clipboard.writeText('FxFr');
+        const b = document.getElementById('copy-text');
+        b.innerText = 'Kopyalandı!';
+        b.style.background = '#0e7778';
+        b.style.color = '#fff';
+        setTimeout(() => {
+            b.innerText = 'Kopyala';
+            b.style.background = 'rgba(22,126,128,.15)';
+            b.style.color = 'var(--neon)';
+        }, 2000);
+    }
+
+    /* SİBERPUNK İMLEÇ */
+    (function(){
+        if(!window.matchMedia('(hover:hover) and (pointer:fine)').matches)return;
+        const cursor=document.querySelector('.fx-cursor');
+        const trail=document.querySelector('.fx-cursor-trail');
+        if(!cursor||!trail)return;
+        document.documentElement.classList.add('fx-cursor-enabled');
+        let x=-100,y=-100,trailX=x,trailY=y,raf=0;
+        const move=(event)=>{
+            x=event.clientX;y=event.clientY;
+            cursor.style.transform=`translate3d(${x}px,${y}px,0)`;
+            cursor.classList.add('is-visible');
+            trail.classList.add('is-visible');
+            if(!raf)raf=requestAnimationFrame(animateTrail);
+        };
+        function animateTrail(){
+            trailX+=(x-trailX)*.22;trailY+=(y-trailY)*.22;
+            trail.style.transform=`translate3d(${trailX}px,${trailY}px,0)`;
+            if(Math.abs(x-trailX)+Math.abs(y-trailY)>.25)raf=requestAnimationFrame(animateTrail);
+            else{trailX=x;trailY=y;trail.style.transform=`translate3d(${x}px,${y}px,0)`;raf=0;}
+        }
+        document.addEventListener('pointermove',move,{passive:true});
+        document.addEventListener('pointerover',(event)=>{
+            const target=event.target;
+            cursor.classList.toggle('is-hover',!!target.closest('a,button,[role="button"],select,label,.card,.music-progress'));
+            cursor.classList.toggle('is-text',!!target.closest('input,textarea,[contenteditable="true"]'));
+        },{passive:true});
+        document.addEventListener('pointerdown',()=>cursor.classList.add('is-pressed'),{passive:true});
+        document.addEventListener('pointerup',()=>cursor.classList.remove('is-pressed'),{passive:true});
+        document.addEventListener('pointerleave',()=>{cursor.classList.remove('is-visible','is-hover','is-text','is-pressed');trail.classList.remove('is-visible');},{passive:true});
+        document.addEventListener('pointerenter',()=>{cursor.classList.add('is-visible');trail.classList.add('is-visible');},{passive:true});
+    })();
+
+    /* 4. MATRIX EFEKTİ */
+    (function(){
+        const c = document.getElementById('matrix-canvas');
+        const x = c.getContext('2d');
+        let W, H, cols, drops;
+        function init(){
+            W = c.width = innerWidth;
+            H = c.height = innerHeight;
+            cols = Math.floor(W / 18);
+            drops = Array(cols).fill(1);
+        }
+        init();
+        const ch = '01FXFREEZE';
+        function draw(){
+            x.fillStyle = 'rgba(0,0,0,0.08)';
+            x.fillRect(0, 0, W, H);
+            x.fillStyle = 'rgba(180,0,0,0.4)';
+            x.font = '12px "Share Tech Mono"';
+            for(let i = 0; i < cols; i++){
+                x.fillText(ch[Math.floor(Math.random() * ch.length)], i * 18, drops[i] * 18);
+                if(drops[i] * 18 > H && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+            requestAnimationFrame(draw);
+        }
+        draw();
+        addEventListener('resize', init);
+    })();
+    </script>
+</body>
+</html>
